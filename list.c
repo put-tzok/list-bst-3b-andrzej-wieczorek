@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-unsigned int ns[] = { 10, /* TODO: fill values which will be used as lists' sizes */ };
+unsigned int ns[] = {400, 800, 1600, 3200, 6400, 12800, 25600, 51200, 102400, 204800};
 
 // each list node contains an integer key value and pointer to next list node
 struct node {
@@ -16,23 +16,84 @@ struct node {
 struct node *head = NULL;
 
 
+struct node *new_el; //globalny wskaznik do dodawania elementow
+
 struct node* list_insert(int value) {
-    // TODO: implement
-    return NULL;
+    new_el = malloc(sizeof(struct node)); // zaalokowanie pamiecina nowy wezel listy
+    new_el->next = head;  // wskazanie na dotychcasowa glowe
+    new_el->key = value;
+    head = new_el;  // wyskazanie, ze nowy wzel jest, nowa glowa listy
+
+    return head;//NULL
 }
 
 struct node* list_search(int value) {
-    // TODO: implement
-    return NULL;
+    struct node *tmp = head;  // tymczasowe wskazanie glowy[do przesuwnia po liscie]
+
+    // UWAGA NA WARUNEK WAZNE: || ...... !!! gdy poszukiwany element jest ostatnim
+    while(tmp->next != NULL || tmp->key == value){
+        if(tmp->key == value){  // warunek znalezienia
+            return tmp;  // zwrocenie wskaznika na poszukiwany element
+        }
+        tmp = tmp->next;  // przesuniecie sie w liscie
+    }
+    return NULL;  // gdy element nie znaleziony
 }
 
 void list_delete(int value) {
-    // TODO: implement
+    // gdy usuwamy glowe listy
+    if(head->key == value){
+        struct node *toDel; // zeby zwolic
+        toDel = head;
+        head = head->next;
+        free(toDel);
+
+        return ;
+    }
+
+    // dla pozostalych przypadkow
+    struct node *tmp = head->next; // zaczynamy od 2 elementu listy, [dalej do wskazywanie aktuaalnego elementu]
+    struct node *prev = head; // pierwszy element listy, wskaznik na poprzednika
+    struct node *next;  // wskaznik na kolejny element
+
+    while(tmp->next != NULL || tmp->key == value){
+        if(tmp->key == value){
+            //sprawdzenie czy nie ostatni element listy
+            if(tmp->next == NULL){
+                prev->next = NULL; // odciecie ostatniego elementu
+                free(tmp);
+
+                return ;
+            }
+
+            next = tmp->next;
+            prev->next = next;
+            free(tmp);
+
+            return ;
+        }
+
+        tmp = tmp->next; // przsuniecie glownego wskjaznika
+        prev = prev->next; // przesuniecie wskaznika na poprzednika
+    }
 }
 
+
+// wielkosc listy jednokierunkowej
 unsigned int list_size() {
-    // TODO: implement
-    return 0;
+    if(head == NULL){
+        return 0; // jesli lista jest pusta
+    }
+
+    unsigned int size = 1;  // jesli ma korzen, rozmiar na pewno 1
+    struct node *tmp = head;  // pomocniczy wskaznik do przejsica listy
+
+    while(tmp->next != NULL){
+        tmp = tmp->next;
+        size++;
+    }
+
+    return size;
 }
 
 /*
@@ -65,6 +126,8 @@ void shuffle(int *t, int n) {
 }
 
 int main() {
+    FILE * data;
+    data = fopen("data-list.txt", "w");
     bool no_yes[] = { false, true };
 
     for (unsigned int i = 0; i < sizeof(no_yes) / sizeof(*no_yes); i++) {
@@ -116,10 +179,12 @@ int main() {
 
             free(t);
 
-            printf("%d\t%s\t%f\t%f\n", n, enable_shuffle ? "true" : "false",
+            fprintf(data,
+                    "%d\t%s\t%f\t%f\n", n, enable_shuffle ? "true" : "false",
                     (double)insertion_time / CLOCKS_PER_SEC,
                     (double)search_time / CLOCKS_PER_SEC);
         }
     }
+    fclose(data);
     return 0;
 }
